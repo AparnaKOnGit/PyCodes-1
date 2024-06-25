@@ -1,0 +1,33 @@
+import numpy as np
+
+
+#array=np.zeros((6,5))
+array_2d = np.array([[1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+                     [4, 5, 6, 7, 8, 9, 10, 11, 12, 13],
+                     [7, 8, 9, 10, 1, 2, 3, 4, 5, 6]])
+
+# Extracting the specified subarrays
+subarray1 = array_2d[:3, :5]
+subarray2 = array_2d[:3, 5:]
+
+'''
+for i in range(3):
+    array[i]=subarray1[i]
+    
+k = 0
+for i in range(3, 6):
+   array[i]=subarray2[k]
+   k+=1
+   
+'''
+array = np.concatenate((subarray1, subarray2))
+
+
+
+#array[0] = subarray1[1]
+# Output
+# print(subarray1)
+# print(subarray2)
+#print(subarray1[1])
+print(array)
+#print(array[5])

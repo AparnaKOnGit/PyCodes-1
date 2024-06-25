@@ -1,0 +1,11 @@
+pixelValues=np.zeros((50,20))
+countC=0
+countR=0
+
+for image in boxes:
+    totalPixel=cv2.countNonZero(image)
+    pixelValues[countR][countC]=totalPixel
+    countC+=1
+    if (countC==20):
+        countR +=1
+        countC=0

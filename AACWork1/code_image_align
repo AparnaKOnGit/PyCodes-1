@@ -1,0 +1,95 @@
+import cv2
+import numpy as np
+# Load the two images
+image1 = cv2.imread('sample omr markings')
+image2 = cv2.imread('original reference image')
+
+# Convert the images to grayscale
+gray1 = cv2.cvtColor(image1, cv2.COLOR_BGR2GRAY)
+gray2 = cv2.cvtColor(image2, cv2.COLOR_BGR2GRAY)
+
+# Initialize the ORB detector
+orb = cv2.ORB_create()
+
+# Find the keypoints and descriptors with ORB
+kp1, des1 = orb.detectAndCompute(gray1, None)
+kp2, des2 = orb.detectAndCompute(gray2, None)
+
+# Initialize the Brute Force Matcher
+bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
+
+# Match the descriptors
+matches = bf.match(des1, des2)
+
+# Sort them in the order of their distance
+matches = sorted(matches, key=lambda x: x.distance)
+
+# Extract location of good matches
+points1 = np.zeros((len(matches), 2), dtype=np.float32)
+points2 = np.zeros((len(matches), 2), dtype=np.float32)
+
+for i, match in enumerate(matches):
+    points1[i, :] = kp1[match.queryIdx].pt
+    points2[i, :] = kp2[match.trainIdx].pt
+
+# Find the homography matrix
+H, mask = cv2.findHomography(points1, points2, cv2.RANSAC)
+aligned = cv2.warpPerspective(image1, H, (gray2.shape[1], gray2.shape[0]))
+
+
+target_width = 800
+target_height = 600
+
+# Get original image dimensions
+height, width = image2.shape[:2]
+
+height, width = aligned.shape[:2]
+# Calculate aspect ratio
+aspect_ratio = width / height
+
+# Determine whether to scale by width or height to fit within the target dimensions
+if target_width / aspect_ratio <= target_height:
+    # Fit by width
+    new_width = target_width
+    new_height = int(target_width / aspect_ratio)
+else:
+    # Fit by height
+    new_height = target_height
+    new_width = int(target_height * aspect_ratio)
+resized_image3 = cv2.resize(aligned, (new_width, new_height))
+row,col,_=aligned.shape
+print('rows',row)
+print('colz',col)
+resized_image3=aligned[0:1456,435:1164]
+
+gray = cv2.cvtColor(resized_image3, cv2.COLOR_BGR2GRAY)
+    
+    # Apply GaussianBlur to reduce noise
+blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+    
+    # Thresholding to create binary image
+_, thresh = cv2.threshold(blurred, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+    
+    # Find contours
+contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    
+    # Loop through contours
+for contour in contours:
+        # Get contour area
+        area = cv2.contourArea(contour)
+        
+        # Filter out small contours
+        if area > 30:
+            # Draw contour
+            cv2.drawContours(resized_image3, [contour], -1, (0, 255, 0), 2)
+
+# Resize the image to the calculated dimensions
+resized_image = cv2.resize(image2, (new_width, new_height))
+resized_image4 = cv2.resize(resized_image3, (new_width, new_height))
+
+
+
+cv2.imshow('Original Image', resized_image)
+cv2.imshow('Aligned Image', resized_image4)
+cv2.imwrite('cropped_image3.jpg', aligned)
+cv2.waitKey(0)
